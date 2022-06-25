@@ -37,12 +37,14 @@ func getPlayerHandler(w http.ResponseWriter, r *http.Request) {
 	database := &database.PlayerData{
 		Name: name,
 	}
-	join_date, ok := database.GetJoinDate()
-	if ok {
-		json.NewEncoder(w).Encode(map[string]string{"join_date": join_date})
-	} else {
-		json.NewEncoder(w).Encode(map[string]string{"error": "Player not found"})
+	playerdata := database.GetPlayerReturn()
+	e, err := json.Marshal(playerdata)
+	if err != nil {
+		log.Println(err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
+	w.Write(e)
 }
 
 func postPlayerHandler(w http.ResponseWriter, r *http.Request) {

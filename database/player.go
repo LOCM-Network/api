@@ -10,6 +10,12 @@ type PlayerData struct {
 	Log      *log.Logger
 }
 
+type PlayerReturn struct {
+	Name     string `json:"name"`
+	JoinDate string `json:"join_date"`
+	Coin     int64  `json:"coin"`
+}
+
 func (p *PlayerData) GetJoinDate() (join string, ok bool) {
 	if join, ok = p.Database.GetJoinDate(p.Name); ok {
 		return join, true
@@ -47,4 +53,13 @@ func (p *PlayerData) RemoveCoin(coin int64) bool {
 	}
 	p.Database.SetCoin(p.Name, current-coin)
 	return true
+}
+
+//get PlayerReturn
+func (p *PlayerData) GetPlayerReturn() PlayerReturn {
+	return PlayerReturn{
+		Name:     p.Name,
+		JoinDate: p.JoinDate,
+		Coin:     p.Coin,
+	}
 }
