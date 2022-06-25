@@ -5,15 +5,22 @@ import (
 	"log"
 	"os"
 
+	"github.com/locm-team/api/player"
 	_ "github.com/mattn/go-sqlite3"
 )
+
+var database *SQLiteDatabase
 
 type SQLiteDatabase struct {
 	Database *sql.DB
 	Logger   *log.Logger
 }
 
-func (db *SQLiteDatabase) SetUp() {
+func GetDataBase() *SQLiteDatabase {
+	return database
+}
+
+func SetUp(log *log.Logger) *SQLiteDatabase {
 	log.Println("Initializing database")
 	file, err := os.Create("database.db")
 	if err != nil {
@@ -25,15 +32,41 @@ func (db *SQLiteDatabase) SetUp() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	db.Database = sqliData
-	db.createTable()
+	database = &SQLiteDatabase{sqliData, log}
+	database.createTable()
+	return database
+}
+
+func (db *SQLiteDatabase) GetPlayerData(name string) (player.PlayerData, bool) {
+	getPlayerData := `SELECT * FROM player WHERE name = ?`
+	statement, err := db.Database.Prepare(getPlayerData)
+	if err != nil {
+		db.Logger.Println(err)
+		return player.PlayerData{}, false
+	}
+	var playerData player.PlayerData
+	statement.QueryRow(name).Scan(&playerData.Name, &playerData.JoinDate, &playerData.Coin)
+	return playerData, true
+}
+
+func (db *SQLiteDatabase) CheckPlayer(name string) bool {
+	getPlayer := `SELECT * FROM player WHERE name = ?`
+	statement, err := db.Database.Prepare(getPlayer)
+	if err != nil {
+		db.Logger.Println(err)
+		return false
+	}
+	var playerData player.PlayerData
+	statement.QueryRow(name).Scan(&playerData.Name, &playerData.JoinDate, &playerData.Coin)
+	return playerData.Name != ""
 }
 
 func (db *SQLiteDatabase) createTable() {
 	createPlayerTable := `CREATE TABLE IF NOT EXISTS player	(
 		"id"	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
 		"name"	TEXT NOT NULL,
-		"join_date"	TEXT NOT NULL
+		"join_date"	TEXT NOT NULL,
+		"coin"	INTEGER NOT NULL
 	);`
 	statement, err := db.Database.Prepare(createPlayerTable)
 	if err != nil {
@@ -42,7 +75,7 @@ func (db *SQLiteDatabase) createTable() {
 	statement.Exec()
 }
 
-func (db *SQLiteDatabase) InsertPlayer(name string, joinDate string, coin int64) bool {
+func (db *SQLiteDatabase) Register(name string, joinDate string, coin int64) bool {
 	insertPlayer := `INSERT INTO player (name, join_date, coin) VALUES (?, ?, ?)`
 	statement, err := db.Database.Prepare(insertPlayer)
 	if err != nil {

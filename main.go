@@ -10,15 +10,13 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/locm-team/api/database"
 	"github.com/locm-team/api/donate"
+	"github.com/locm-team/api/player"
 )
 
 func main() {
 	r := mux.NewRouter()
 	l := log.Default()
-	sqlite := database.SQLiteDatabase{
-		Logger: l,
-	}
-	sqlite.SetUp()
+	database.SetUp(l)
 	setupEnpoints(r)
 	fmt.Println("Starting WebServer on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", r))
@@ -26,7 +24,7 @@ func main() {
 
 func setupEnpoints(r *mux.Router) {
 	r.HandleFunc("/player/{name}", getPlayerHandler).Methods("GET")
-	r.HandleFunc("/player/register", postPlayerHandler).Methods("POST")
+	r.HandleFunc("/register", postPlayerHandler).Methods("POST")
 	r.HandleFunc("/donate", postCardHandler).Methods("POST")
 }
 
@@ -34,33 +32,31 @@ func getPlayerHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	vars := mux.Vars(r)
 	name := vars["name"]
-	database := &database.PlayerData{
-		Name: name,
+	if ok := database.GetDataBase().CheckPlayer(name); ok {
+		playerData, ok2 := database.GetDataBase().GetPlayerData(name)
+		if ok2 {
+			json.NewEncoder(w).Encode(playerData)
+		} else {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+	} else {
+		json.NewEncoder(w).Encode(map[string]string{"status": "error", "message": "Player not found"})
 	}
-	playerdata := database.GetPlayerReturn()
-	e, err := json.Marshal(playerdata)
+}
+
+func postPlayerHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	var playerData player.PlayerData
+	err := json.NewDecoder(r.Body).Decode(&playerData)
 	if err != nil {
 		log.Println(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	w.Write(e)
-}
-
-func postPlayerHandler(w http.ResponseWriter, r *http.Request) {
-	data := r.URL.Query()
-	name := data.Get("name")
-	join_date := data.Get("join_date")
-	coin, ok := strconv.ParseInt(data.Get("coin"), 10, 32)
-	if ok != nil {
-		coin = 0
-	}
-	database := &database.PlayerData{
-		Name:     name,
-		JoinDate: join_date,
-		Coin:     coin,
-	}
-	ok2 := database.Register()
+	name := playerData.Name
+	join_date := playerData.JoinDate
+	coin := playerData.Coin
+	ok2 := database.GetDataBase().Register(name, join_date, coin)
 	if ok2 {
 		w.WriteHeader(http.StatusOK)
 		return
