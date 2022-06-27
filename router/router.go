@@ -15,7 +15,7 @@ import (
 
 func SetupEndPoints(r *mux.Router) {
 	r.HandleFunc("/player/{name}", getPlayerHandler).Methods("GET")
-	r.HandleFunc("/register", postPlayerHandler).Methods("POST")
+	r.HandleFunc("/register", postRegisterPlayerHandler).Methods("POST")
 	r.HandleFunc("/donate", postCardHandler).Methods("POST")
 }
 
@@ -35,7 +35,7 @@ func getPlayerHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func postPlayerHandler(w http.ResponseWriter, r *http.Request) {
+func postRegisterPlayerHandler(w http.ResponseWriter, r *http.Request) {
 	if checkIP(r) {
 		w.WriteHeader(http.StatusForbidden)
 		return

@@ -138,3 +138,14 @@ func (db *SQLiteDatabase) GetTop5() []string {
 	}
 	return names
 }
+
+func (db *SQLiteDatabase) Save(playerData *player.PlayerData) bool {
+	insertPlayer := `INSERT OR REPLACE INTO player (name, join_date, coin) VALUES (?, ?, ?)`
+	statement, err := db.Database.Prepare(insertPlayer)
+	if err != nil {
+		log.Fatal(err)
+		return false
+	}
+	statement.Exec(playerData.Name, playerData.JoinDate, playerData.Coin)
+	return true
+}
