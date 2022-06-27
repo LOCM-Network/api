@@ -8,7 +8,6 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/locm-team/api/database"
-	"github.com/locm-team/api/donate"
 	"github.com/locm-team/api/player"
 	"github.com/locm-team/api/util"
 )
@@ -60,25 +59,7 @@ func postRegisterPlayerHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func postCardHandler(w http.ResponseWriter, r *http.Request) {
-	data := r.URL.Query()
-	telco := data.Get("telco")
-	pin := data.Get("pin")
-	serial := data.Get("serial")
-	transaction_id := data.Get("transaction_id")
-	amount, ok := strconv.ParseInt(data.Get("amount"), 10, 32)
-	if ok != nil {
-		amount = 0
-	}
-	player := data.Get("player")
-	card := &donate.CardData{
-		Telco:         telco,
-		Pin:           pin,
-		Serial:        serial,
-		Amount:        amount,
-		Player:        player,
-		TransactionID: transaction_id,
-	}
-	card.PostCard()
+	//todo: parse card data
 }
 
 func checkIP(r *http.Request) bool {
