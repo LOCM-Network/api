@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/locm-team/api/database"
 	"github.com/locm-team/api/router"
+	"github.com/locm-team/api/util"
 )
 
 func main() {
@@ -15,6 +16,8 @@ func main() {
 	l := log.Default()
 	database.SetUp(l)
 	router.SetupEndPoints(r)
-	fmt.Println("Starting WebServer on port 8080")
-	log.Fatal(http.ListenAndServe(":8080", r))
+	util.InitConfig()
+	fmt.Println("Server is running on port " + util.GetConfig()["port"])
+	log.Fatal(http.ListenAndServe(":"+util.GetConfig()["port"], r))
+
 }
