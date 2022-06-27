@@ -10,6 +10,7 @@ import (
 	"github.com/locm-team/api/database"
 	"github.com/locm-team/api/donate"
 	"github.com/locm-team/api/player"
+	"github.com/locm-team/api/util"
 )
 
 func SetupEndPoints(r *mux.Router) {
@@ -35,6 +36,10 @@ func getPlayerHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func postPlayerHandler(w http.ResponseWriter, r *http.Request) {
+	if checkIP(r) {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
 	var playerData player.PlayerData
 	err := json.NewDecoder(r.Body).Decode(&playerData)
@@ -55,6 +60,10 @@ func postPlayerHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func postCardHandler(w http.ResponseWriter, r *http.Request) {
+	if checkIP(r) {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
 	data := r.URL.Query()
 	telco := data.Get("telco")
 	pin := data.Get("pin")
@@ -74,4 +83,9 @@ func postCardHandler(w http.ResponseWriter, r *http.Request) {
 		TransactionID: transaction_id,
 	}
 	card.PostCard()
+}
+
+func checkIP(r *http.Request) bool {
+	access_ip := util.GetConfig()["remote_ip"]
+	return util.GetIP(r) != access_ip
 }

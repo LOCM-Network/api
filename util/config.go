@@ -57,3 +57,9 @@ func SetConfig(config map[string]string) {
 		panic(err)
 	}
 }
+
+func SetConfigFromKeyValue(key, value string) {
+	config := GetConfig()
+	config[key] = value
+	SetConfig(config)
+}

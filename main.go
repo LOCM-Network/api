@@ -19,5 +19,4 @@ func main() {
 	util.InitConfig()
 	fmt.Println("Server is running on port " + util.GetConfig()["port"])
 	log.Fatal(http.ListenAndServe(":"+util.GetConfig()["port"], r))
-
 }
