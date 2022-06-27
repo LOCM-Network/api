@@ -25,12 +25,12 @@ func getPlayerHandler(w http.ResponseWriter, r *http.Request) {
 	if ok := database.GetDataBase().CheckPlayer(name); ok {
 		playerData, ok2 := database.GetDataBase().GetPlayerData(name)
 		if ok2 {
-			json.NewEncoder(w).Encode(playerData)
+			json.NewEncoder(w).Encode(Response{Status: ResponseStatusOK, Message: ResponseOkMessage, Data: playerData})
 		} else {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 	} else {
-		json.NewEncoder(w).Encode(map[string]string{"status": "error", "message": "Player not found"})
+		json.NewEncoder(w).Encode(Response{Status: ResponseStatusNotFound, Message: ResponseNotFoundMessage, Data: nil})
 	}
 }
 
@@ -40,7 +40,7 @@ func postPlayerHandler(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&playerData)
 	if err != nil {
 		log.Println(err)
-		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(Response{Status: ResponseStatusInternalServerError, Message: ResponseInternalServerErrorMessage, Data: nil})
 		return
 	}
 	name := playerData.Name
@@ -48,10 +48,10 @@ func postPlayerHandler(w http.ResponseWriter, r *http.Request) {
 	coin := playerData.Coin
 	ok2 := database.GetDataBase().Register(name, join_date, coin)
 	if ok2 {
-		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(Response{Status: ResponseStatusOK, Message: ResponseOkMessage, Data: nil})
 		return
 	}
-	w.WriteHeader(http.StatusInternalServerError)
+	json.NewEncoder(w).Encode(Response{Status: ResponseStatusInternalServerError, Message: ResponseInternalServerErrorMessage, Data: nil})
 }
 
 func postCardHandler(w http.ResponseWriter, r *http.Request) {
