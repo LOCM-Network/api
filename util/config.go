@@ -2,6 +2,7 @@ package util
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"os"
 )
 
@@ -12,54 +13,34 @@ var DefaultConfig = map[string]string{
 	"donate_host": "localhost",
 }
 
+type Config struct {
+	Host       string
+	Port       int
+	RemoteHost string
+	DonateHost string
+}
+
 func InitConfig() {
-	config := GetConfig()
-	for key, value := range DefaultConfig {
-		if _, ok := config[key]; !ok {
-			config[key] = value
-		}
-	}
-	SetConfig(config)
+	CreateConfig()
 }
 
 func CreateConfig() {
 	if _, err := os.Stat("config.json"); os.IsNotExist(err) {
-		os.Create("config.json")
+		data := Config{
+			Host:       "localhost",
+			Port:       8080,
+			RemoteHost: "localhost",
+			DonateHost: "localhost",
+		}
+		file, _ := json.MarshalIndent(data, " ", " ")
+		_ = ioutil.WriteFile("config.json", file, 0644)
 	}
 }
 
-func GetConfig() map[string]string {
-	var config map[string]string
-	CreateConfig()
-	file, err := os.Open("config.json")
-	if err != nil {
-		panic(err)
-	}
-	defer file.Close()
-	decoder := json.NewDecoder(file)
-	err = decoder.Decode(&config)
-	if err != nil {
-		panic(err)
-	}
-	return config
-}
+func GetConfig() *Config {
+	file, _ := ioutil.ReadFile("config.json")
+	data := &Config{}
+	_ = json.Unmarshal([]byte(file), &data)
 
-func SetConfig(config map[string]string) {
-	CreateConfig()
-	file, err := os.OpenFile("config.json", os.O_WRONLY|os.O_CREATE, 0644)
-	if err != nil {
-		panic(err)
-	}
-	defer file.Close()
-	encoder := json.NewEncoder(file)
-	err = encoder.Encode(config)
-	if err != nil {
-		panic(err)
-	}
-}
-
-func SetConfigFromKeyValue(key, value string) {
-	config := GetConfig()
-	config[key] = value
-	SetConfig(config)
+	return data
 }

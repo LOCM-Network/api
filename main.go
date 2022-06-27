@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/mux"
 	"github.com/locm-team/api/database"
@@ -17,6 +18,7 @@ func main() {
 	database.SetUp(l)
 	router.SetupEndPoints(r)
 	util.InitConfig()
-	fmt.Println("Server is running on port " + util.GetConfig()["port"])
-	log.Fatal(http.ListenAndServe(":"+util.GetConfig()["port"], r))
+	config := util.GetConfig()
+	fmt.Println("Server is running on port " + strconv.Itoa(config.Port))
+	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(config.Port), r))
 }

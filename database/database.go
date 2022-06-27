@@ -20,13 +20,23 @@ func GetDataBase() *SQLiteDatabase {
 	return database
 }
 
+func Check() bool {
+	_, err := os.Stat("database.db")
+	if err != nil {
+		return false
+	}
+	return true
+}
+
 func SetUp(log *log.Logger) *SQLiteDatabase {
 	log.Println("Initializing database")
-	file, err := os.Create("database.db")
-	if err != nil {
-		log.Fatal(err)
+	if !Check() {
+		file, err := os.Create("database.db")
+		if err != nil {
+			log.Fatal(err)
+		}
+		file.Close()
 	}
-	file.Close()
 
 	sqliData, err := sql.Open("sqlite3", "database.db")
 	if err != nil {
@@ -37,28 +47,43 @@ func SetUp(log *log.Logger) *SQLiteDatabase {
 	return database
 }
 
-func (db *SQLiteDatabase) GetPlayerData(name string) (player.PlayerData, bool) {
-	getPlayerData := `SELECT * FROM player WHERE name = ?`
-	statement, err := db.Database.Prepare(getPlayerData)
+func (db *SQLiteDatabase) GetPlayerData(name string) (*player.PlayerData, bool) {
+	statement, err := db.Database.Query("SELECT * FROM player WHERE name = ?", name)
 	if err != nil {
 		db.Logger.Println(err)
-		return player.PlayerData{}, false
+		return &player.PlayerData{}, false
 	}
 	var playerData player.PlayerData
-	statement.QueryRow(name).Scan(&playerData.Name, &playerData.JoinDate, &playerData.Coin)
-	return playerData, true
+	var id int
+	for statement.Next() {
+		err := statement.Scan(&id, &playerData.Name, &playerData.JoinDate, &playerData.Coin)
+		if err != nil {
+			db.Logger.Println(err)
+			return &player.PlayerData{}, false
+		}
+	}
+	return &playerData, true
 }
 
-func (db *SQLiteDatabase) CheckPlayer(name string) bool {
-	getPlayer := `SELECT * FROM player WHERE name = ?`
-	statement, err := db.Database.Prepare(getPlayer)
+func (db *SQLiteDatabase) GetAllPlayerData() []player.PlayerData {
+	getAllPlayerData := `SELECT * FROM player`
+	statement, err := db.Database.Prepare(getAllPlayerData)
 	if err != nil {
 		db.Logger.Println(err)
-		return false
+		return nil
 	}
 	var playerData player.PlayerData
-	statement.QueryRow(name).Scan(&playerData.Name, &playerData.JoinDate, &playerData.Coin)
-	return playerData.Name != ""
+	var playerDatas []player.PlayerData
+	rows, err := statement.Query()
+	if err != nil {
+		db.Logger.Println(err)
+		return nil
+	}
+	for rows.Next() {
+		rows.Scan(&playerData.Name, &playerData.JoinDate, &playerData.Coin)
+		playerDatas = append(playerDatas, playerData)
+	}
+	return playerDatas
 }
 
 func (db *SQLiteDatabase) createTable() {
@@ -75,7 +100,7 @@ func (db *SQLiteDatabase) createTable() {
 	statement.Exec()
 }
 
-func (db *SQLiteDatabase) Register(name string, joinDate string, coin int64) bool {
+func (db *SQLiteDatabase) Register(name string, joinDate string, coin int) bool {
 	insertPlayer := `INSERT INTO player (name, join_date, coin) VALUES (?, ?, ?)`
 	statement, err := db.Database.Prepare(insertPlayer)
 	if err != nil {
@@ -98,7 +123,7 @@ func (db *SQLiteDatabase) GetJoinDate(name string) (JoinDate string, ok bool) {
 	return joinDate, true
 }
 
-func (db *SQLiteDatabase) GetCoin(name string) (coin int64, ok bool) {
+func (db *SQLiteDatabase) GetCoin(name string) (coin int, ok bool) {
 	getCoin := `SELECT coin FROM player WHERE name = ?`
 	statement, err := db.Database.Prepare(getCoin)
 	if err != nil {
@@ -109,7 +134,7 @@ func (db *SQLiteDatabase) GetCoin(name string) (coin int64, ok bool) {
 	return coin, true
 }
 
-func (db *SQLiteDatabase) SetCoin(name string, coin int64) bool {
+func (db *SQLiteDatabase) SetCoin(name string, coin int) bool {
 	setCoin := `UPDATE player SET coin = ? WHERE name = ?`
 	statement, err := db.Database.Prepare(setCoin)
 	if err != nil {
