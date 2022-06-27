@@ -14,10 +14,10 @@ import (
 )
 
 func SetupEndPoints(r *mux.Router) {
-	r.HandleFunc("/players", getAllPlayersHandler).Methods("GET")
-	r.HandleFunc("/player/{name}", getPlayerHandler).Methods("GET")
-	r.HandleFunc("/register", postRegisterPlayerHandler).Methods("POST")
-	r.HandleFunc("/donate", postCardHandler).Methods("POST")
+	r.HandleFunc("/api/players", getAllPlayersHandler).Methods("GET")
+	r.HandleFunc("/api/player/{name}", getPlayerHandler).Methods("GET")
+	r.HandleFunc("/api/register", postRegisterPlayerHandler).Methods("POST")
+	r.HandleFunc("/api/donate", postCardHandler).Methods("POST")
 }
 
 func getAllPlayersHandler(w http.ResponseWriter, r *http.Request) {
