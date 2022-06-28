@@ -1,6 +1,7 @@
 package util
 
 import (
+	"crypto/md5"
 	"net/http"
 )
 
@@ -14,4 +15,10 @@ func GetIP(r *http.Request) string {
 		return ip
 	}
 	return r.RemoteAddr
+}
+
+func MD5Byte(data []byte) []byte {
+	hash := md5.New()
+	hash.Write(data)
+	return hash.Sum(nil)
 }
